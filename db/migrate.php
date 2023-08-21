@@ -16,22 +16,17 @@ function usage(?string $message = null): void
     echo "Utility script to help manage database migrations." . PHP_EOL;
     echo "Syntax: migrate.php [create|status|up|up-to|reset|down|down-to] [args]" . PHP_EOL;
     echo "options:" . PHP_EOL;
-    echo " status\tShow the status of the migrations" . PHP_EOL;
-    echo " up-one\tApplies the next pending migration" . PHP_EOL;
-    echo " up\tApplies all the pending migrations" . PHP_EOL;
-    echo " up-to\tApplies all the pending migrations up to the migration with the provided ID" . PHP_EOL;
-    echo "   Ex: migrate.php up-to 1692628446_example" . PHP_EOL;
-    echo " reset\tRolls back all the applied migrations" . PHP_EOL;
-    echo " down\tRolls back the last applied migration" . PHP_EOL;
+    echo " status\t\tShow the status of the migrations" . PHP_EOL;
+    echo " up-one\t\tApplies the next pending migration" . PHP_EOL;
+    echo " up\t\tApplies all the pending migrations" . PHP_EOL;
+    echo " up-to\t\tApplies all the pending migrations up to the migration with the provided ID" . PHP_EOL;
+    echo " \t\tEx: migrate.php up-to 1692628446_example" . PHP_EOL;
+    echo " reset\t\tRolls back all the applied migrations" . PHP_EOL;
+    echo " down\t\tRolls back the last applied migration" . PHP_EOL;
     echo " down-to\tRolls back all the applied migrations back to the migration with the provided ID" . PHP_EOL;
-    echo "  Ex: migrate.php down-to 1692628446_example" . PHP_EOL;
+    echo " \t\tEx: migrate.php down-to 1692628446_example" . PHP_EOL;
     echo PHP_EOL;
-    echo "OBS: You need to have a 'config.json' configured in the '" . dirname(__DIR__) . "/config/' folder with the following" . PHP_EOL;
-    echo " 'DB_HOST': The database host" . PHP_EOL;
-    echo " 'DB_USER': The database username" . PHP_EOL;
-    echo " 'DB_PWD': The database password" . PHP_EOL;
-    echo " 'DB_NAME': The database name" . PHP_EOL;
-    echo "Alternatively, you could pass the variables directly:" . PHP_EOL;
+    echo "OBS: You need to provide the database connection credentials:" . PHP_EOL;
     echo " Ex: migrate.php up HOST=localhost USER=user PASSWORD=password DATABASE=db_name" . PHP_EOL;
     echo PHP_EOL;
 
@@ -45,18 +40,12 @@ function err($err): void
 
 function openDatabaseConnection(): PDO
 {
-    $config = [];
-    if (!(isset($_GET["HOST"]) || isset($_GET["USER"]) || isset($_GET["PASSWORD"]) || isset($_GET["DATABASE"]))) {
-        $configFilename = dirname(__DIR__) . "/config/config.json";
-        $config = json_decode(file_get_contents($configFilename) ?: "", associative: true) ?? [];
-    }
-
     $errMessage = fn ($type) => "No {$type} provided";
 
-    $dbHost = $_GET["HOST"] ??  $config['DB_HOST'] ?? err($errMessage('DB_HOST'));
-    $dbUser = $_GET["USER"] ?? $config['DB_USER'] ?? err($errMessage('DB_USER'));
-    $dbPassword = $_GET["PASSWORD"] ?? $config['DB_PWD'] ?? err($errMessage('DB_PWD'));
-    $dbName = $_GET["DATABASE"] ?? $config['DB_NAME'] ?? err($errMessage('DB_NAME'));
+    $dbHost = $_GET["HOST"] ?? err($errMessage('DB_HOST'));
+    $dbUser = $_GET["USER"]  ?? err($errMessage('DB_USER'));
+    $dbPassword = $_GET["PASSWORD"]  ?? err($errMessage('DB_PWD'));
+    $dbName = $_GET["DATABASE"] ??  err($errMessage('DB_NAME'));
 
     try {
         $pdo = new PDO(
@@ -84,7 +73,12 @@ function openDatabaseConnection(): PDO
 
 function getMigrations(): array
 {
-    $files = scandir(__DIR__ . '/migrations');
+    $migrationsDir = __DIR__ . '/migrations/';
+    if (!file_exists($migrationsDir)) {
+        mkdir($migrationsDir, recursive: true);
+    }
+
+    $files = scandir($migrationsDir);
     $files = array_slice($files, 2);
 
     $migrations = [];
