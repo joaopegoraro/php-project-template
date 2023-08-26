@@ -99,7 +99,7 @@ class Router
         $regex = preg_replace(
             pattern: "/\{([\w-]+)\}/",
             replacement: "(?<$1>[\w\-]+)",
-            subject: '#^' . str_replace('/', '\/', $route) . '(\?[\w\-=]*|\/?)$#'
+            subject: '#^' . str_replace('/', '\/', $route) . '(\?[\w\-=&]*|\/?)$#'
         );
 
         $matches = [];
